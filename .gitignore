@@ -1,0 +1,10 @@
+build/
+build.bat
+dependencies/
+.cache/
+
+
+#SDL library files
+!dependencies/SDL2-2.32.6/x86_64-w64-mingw32/include/SDL2/**
+!dependencies/SDL2-2.32.6/x86_64-w64-mingw32/lib/libSDL2main.a
+!dependencies/SDL2-2.32.6/x86_64-w64-mingw32/lib/libSDL2.a
