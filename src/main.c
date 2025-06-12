@@ -1,13 +1,14 @@
-#include "SDL_rect.h"
+#include <windows.h>
+/* #include <time.h> */
 #include "SDL_surface.h"
 #include "SDL_video.h"
 #include <stdio.h>
 #include <stdbool.h>
 #include <SDL2/SDL.h>
+#include <stdlib.h>
 
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 800
-#define ACC_GRAVITY 10
 
 
 
@@ -80,16 +81,67 @@ void close() {
   SDL_Quit();
 }
 
+//global variables
+void(*plug_update_ptr)(void);
+void (*step_ptr)(Circle*, SDL_Window*, SDL_Surface*);
+void (*createCircle_ptr)(Circle*, SDL_Surface*);
+HMODULE plug_dll;
+
+
+
+
+
+bool hot_reload() {
+
+    if(plug_dll) {
+      FreeLibrary(plug_dll);
+    }
+
+   int result = system(
+      "gcc -shared -o ../build/plug.dll ../plug/plug.c "
+      "-I../dependencies/SDL2-2.32.6/x86_64-w64-mingw32/include "
+      "../dependencies/SDL2-2.32.6/x86_64-w64-mingw32/lib/libSDL2main.a "
+      "../dependencies/SDL2-2.32.6/x86_64-w64-mingw32/lib/libSDL2.a "
+      "-lmingw32 "
+      "-lsetupapi -limm32 -lversion -lwinmm -lkernel32 -luser32 -lgdi32 -lwinspool "
+      "-lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 "
+      "-Wl,--out-implib,../build/libplug.dll.a"
+  );
+
+    if(result !=0) {
+      printf("DLL recompilation failed.\n");
+      return false;
+    }
+
+    CopyFile("../build/plug.dll", "../build/plug_temp.dll", FALSE);
+    plug_dll = LoadLibrary("../build/plug_temp.dll");
+
+
+
+    plug_update_ptr = (void (*) (void))GetProcAddress(plug_dll, "plug_update");
+    step_ptr = (void (*)(Circle*, SDL_Window*, SDL_Surface*))GetProcAddress(plug_dll, "step");
+    createCircle_ptr = (void (*)(Circle*, SDL_Surface*))GetProcAddress(plug_dll, "createCircle");
+
+    plug_update_ptr();
+    fflush(stdout);
+
+
+    return true;
+}
+
 
 
 
 int main(int argc, char* argv[]) {
-
-  //initializing the main loop:
   if(!init()) {
-    return 0;
+    return 1;
   }
 
+
+  if(!hot_reload()) {
+    printf("Hot reloading failed");
+    return 1;
+  }
 
   //variables:
   bool quit = false;
@@ -98,6 +150,8 @@ int main(int argc, char* argv[]) {
 
 
   while(!quit) {
+
+
 
     //event handling:
     SDL_Event e;
@@ -111,18 +165,19 @@ int main(int argc, char* argv[]) {
       if(e.type == SDL_KEYDOWN) {
         if(e.key.keysym.sym == SDLK_ESCAPE) {
           quit = true;
+        } else if(e.key.keysym.sym == SDLK_r) {
+          hot_reload();
         }
+
       }
     }
 
 
     //calculate the position of the circle
-    step(circle);
+    step_ptr(circle, global_window, global_surface);
 
     //create the circle
-    createCircle(circle);
-
-
+    createCircle_ptr(circle, global_surface);
     SDL_UpdateWindowSurface(global_window);
   }
 
@@ -133,46 +188,3 @@ int main(int argc, char* argv[]) {
 }
 
 
-void step(Circle* circle) {
-    //clear the screen
-    int width, height;
-    SDL_GetWindowSize(global_window, &width, &height);
-    SDL_FillRect(global_surface, &(SDL_Rect){0, 0, width, height}, 0x000000);
-
-
-    //update the position of the ball
-    circle->center_y += circle->velocity_y*0.01;
-    circle->velocity_y += ACC_GRAVITY*0.01;
-    circle->center_x += circle->velocity_x*0.01;
-
-    if(circle->center_y + circle->radius > height || circle->center_y - circle->radius <0) {
-     circle->velocity_y = -(circle->velocity_y);
-    }
-
-    if(circle->center_x + circle->radius > height || circle->center_x - circle->radius <0) {
-     circle->velocity_x = -(circle->velocity_x);
-    }
-
-}
-
-
-
-void createCircle(Circle *circle) {
-
-  //defining the boundries of the circle
-  int left_boundry = circle->center_x-circle->radius;
-  int right_boundry = circle->center_x+circle->radius;
-  int top_boundry = circle->center_y - circle->radius;
-  int bottom_boundry = circle->center_y + circle->radius;
-
-
-  //rendering the circle pixel by pixel
-  for(int horizontal = left_boundry; horizontal <= right_boundry; horizontal++) {
-    for(int vertical = top_boundry; vertical <= bottom_boundry; vertical++) {
-      int distance_from_center_squared = (horizontal - circle->center_x)*(horizontal - circle->center_x) +(vertical - circle->center_y)*(vertical-circle->center_y);
-      if((distance_from_center_squared) <= (circle->radius*circle->radius)) {
-        SDL_FillRect(global_surface, &(SDL_Rect){horizontal, vertical, 1, 1}, 0x89854b);
-      }
-    }
-  }
-}

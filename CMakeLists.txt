@@ -15,6 +15,9 @@ include_directories(
 
     ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/SDL2-2.32.6/x86_64-w64-mingw32/include/SDL2
     ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/SDL2_image-2.8.3/x86_64-w64-mingw32/include
+
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/plug
 )
 
 
@@ -44,6 +47,7 @@ target_link_libraries(BouncingBall PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/SDL2-2.32.6/x86_64-w64-mingw32/lib/libSDL2main.a
     ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/SDL2-2.32.6/x86_64-w64-mingw32/lib/libSDL2.a
     ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/SDL2_image-2.8.3/x86_64-w64-mingw32/lib/libSDL2_image.a
+    # ${CMAKE_CURRENT_SOURCE_DIR}/build/libplug.dll.a
     setupapi
     imm32
     version
