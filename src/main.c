@@ -82,8 +82,7 @@ void close() {
 }
 
 //global variables
-void(*plug_update_ptr)(void);
-void (*step_ptr)(Circle*, SDL_Window*, SDL_Surface*);
+void (*step_ptr)(Circle*,int, int);
 void (*createCircle_ptr)(Circle*, SDL_Surface*);
 HMODULE plug_dll;
 
@@ -116,15 +115,8 @@ bool hot_reload() {
     CopyFile("../build/plug.dll", "../build/plug_temp.dll", FALSE);
     plug_dll = LoadLibrary("../build/plug_temp.dll");
 
-
-
-    plug_update_ptr = (void (*) (void))GetProcAddress(plug_dll, "plug_update");
-    step_ptr = (void (*)(Circle*, SDL_Window*, SDL_Surface*))GetProcAddress(plug_dll, "step");
+    step_ptr = (void (*)(Circle*, int, int))GetProcAddress(plug_dll, "step");
     createCircle_ptr = (void (*)(Circle*, SDL_Surface*))GetProcAddress(plug_dll, "createCircle");
-
-    plug_update_ptr();
-    fflush(stdout);
-
 
     return true;
 }
@@ -173,8 +165,14 @@ int main(int argc, char* argv[]) {
     }
 
 
+    //clear the screen
+    int width, height;
+    SDL_GetWindowSize(global_window, &width, &height);
+    SDL_FillRect(global_surface, &(SDL_Rect){0, 0, width, height}, 0x000000);
+
+
     //calculate the position of the circle
-    step_ptr(circle, global_window, global_surface);
+    step_ptr(circle,width, height);
 
     //create the circle
     createCircle_ptr(circle, global_surface);

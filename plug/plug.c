@@ -18,11 +18,7 @@ typedef struct {
   float velocity_y;
 } Circle;
 
-void step(Circle* circle, SDL_Window* global_window, SDL_Surface* global_surface) {
-    //clear the screen
-    int width, height;
-    SDL_GetWindowSize(global_window, &width, &height);
-    SDL_FillRect(global_surface, &(SDL_Rect){0, 0, width, height}, 0x000000);
+void step(Circle* circle, int width, int height) {
 
 
     //update the position of the ball
@@ -56,7 +52,7 @@ void createCircle(Circle *circle, SDL_Surface* global_surface) {
     for(int vertical = top_boundry; vertical <= bottom_boundry; vertical++) {
       int distance_from_center_squared = (horizontal - circle->center_x)*(horizontal - circle->center_x) +(vertical - circle->center_y)*(vertical-circle->center_y);
       if((distance_from_center_squared) <= (circle->radius*circle->radius)) {
-        SDL_FillRect(global_surface, &(SDL_Rect){horizontal, vertical, 1, 1}, 0x0000ff);
+        SDL_FillRect(global_surface, &(SDL_Rect){horizontal, vertical, 1, 1}, 0xff0000);
       }
     }
   }
