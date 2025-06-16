@@ -2,6 +2,7 @@ build/
 build.bat
 dependencies/
 .cache/
+debug.bat
 
 
 #SDL library files

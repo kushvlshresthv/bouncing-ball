@@ -22,6 +22,7 @@ typedef struct {
   float radius;
   float velocity_x;
   float velocity_y;
+  bool is_resting_y;
 } Circle;
 /* SDL_Renderer* global_renderer = NULL; */
 
@@ -82,7 +83,7 @@ void close() {
 }
 
 //global variables
-void (*step_ptr)(Circle*,int, int);
+void (*step_ptr)(Circle*,int, int, float);
 void (*createCircle_ptr)(Circle*, SDL_Surface*);
 HMODULE plug_dll;
 
@@ -115,7 +116,7 @@ bool hot_reload() {
     CopyFile("../build/plug.dll", "../build/plug_temp.dll", FALSE);
     plug_dll = LoadLibrary("../build/plug_temp.dll");
 
-    step_ptr = (void (*)(Circle*, int, int))GetProcAddress(plug_dll, "step");
+    step_ptr = (void (*)(Circle*, int, int, float))GetProcAddress(plug_dll, "step");
     createCircle_ptr = (void (*)(Circle*, SDL_Surface*))GetProcAddress(plug_dll, "createCircle");
 
     return true;
@@ -137,13 +138,24 @@ int main(int argc, char* argv[]) {
 
   //variables:
   bool quit = false;
-  Circle *circle = &(Circle){.center_x = 300, .center_y = 300, .radius = 100, .velocity_x = 30, .velocity_y = 10};
+  Circle *circle = &(Circle){.center_x = 300, .center_y = 300, .radius = 100, .velocity_x = 100, .velocity_y = 200};
 
+  /* Circle *circle = &(Circle){.center_x = 300, .center_y = 300, .radius = 100, .velocity_x = 10, .velocity_y = 20}; */
+
+  Uint64 perf_frequency = SDL_GetPerformanceFrequency();
+
+  Uint64 last_time = SDL_GetPerformanceCounter();
+
+  float dt = 0;
 
 
   while(!quit) {
 
+    Uint64 current_time = SDL_GetPerformanceCounter();
 
+    dt = (float)(current_time - last_time) / (float)perf_frequency;
+
+    last_time = current_time;
 
     //event handling:
     SDL_Event e;
@@ -172,7 +184,7 @@ int main(int argc, char* argv[]) {
 
 
     //calculate the position of the circle
-    step_ptr(circle,width, height);
+    step_ptr(circle,width, height, dt);
 
     //create the circle
     createCircle_ptr(circle, global_surface);
