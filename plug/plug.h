@@ -14,8 +14,13 @@ typedef struct {
 
 
 typedef struct {
-  Circle *circle;
+  Circle circle;
   SDL_Window *global_window;
-  SDL_Surface *global_surface;
+  SDL_Surface *global_surface;   //can be obtained from the global window itself
+  float dt;
+  int width;    //can be obtained from method call as well
+  int height;
 } Plug;
+
+
 #endif // PLUG_H_

@@ -2,14 +2,84 @@
 #include "plug.h"
 #include <SDL2/SDL.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 #define ACC_GRAVITY 700
 #define DAMPEN 0.92
+#define TRAJECTORY_LENGTH 500
+#define TRAJECTORY_WIDTH 5
+
+Uint64 current_time;
+Uint64 last_time;
+
+
+Circle trajectory[TRAJECTORY_LENGTH];
+int circle_count = 0;
 
 
 
-void update() {
+//forward declarations:
+void record_trajectory(Circle *);
+void render_trajectory(SDL_Surface *);
+void create_circle(Circle *, SDL_Surface*);
+void next_position(Circle*, int, int, float);
 
+
+
+void init(Plug *plug) {
+
+    plug->circle = (Circle){.center_x = 300, .center_y = 300, .radius = 100, .velocity_x = 100, .velocity_y = 0};
+
+    printf("initialization done\n");
+
+  last_time = SDL_GetPerformanceCounter();
+}
+
+
+
+
+
+void update(Plug *plug) {
+
+    //calculate how many time is taken to render each frame
+
+    Uint64 current_time = SDL_GetPerformanceCounter();
+    plug->dt = (float)(current_time-last_time)/(float)SDL_GetPerformanceFrequency();
+    last_time = current_time;
+
+    printf("FPS: %f\n", 1/plug->dt);
+
+    record_trajectory(&plug->circle);
+    render_trajectory(plug->global_surface);
+    next_position(&plug->circle, plug->width, plug->height, plug->dt);
+    create_circle(&plug->circle, plug->global_surface);
+}
+
+
+
+
+void record_trajectory(Circle *circle) {
+  printf("Trajectory recorded\n");
+    //add the circle the tragectory
+    if(circle_count < TRAJECTORY_LENGTH) {
+      trajectory[circle_count] = *circle;
+      circle_count++;
+    } else {
+      //this block is executed when circle count = TRAJECTORY LENGTH
+      for(int i = 0; i<circle_count-1; i++) {
+        trajectory[i] = trajectory[i+1];
+      }
+      trajectory[circle_count - 1] = *circle;
+    }
+}
+
+
+void render_trajectory(SDL_Surface* global_surface) {
+  printf("Trajectory Rendered\n");
+    for(int i = 0; i < circle_count; i++) {
+      trajectory[i].radius = TRAJECTORY_WIDTH*i*0.005;
+      create_circle(&trajectory[i], global_surface);
+    }
 }
 
 
@@ -17,7 +87,8 @@ void update() {
 
 
 //NOTE: The bug was occuring because i was not correcting the position everytime the ball collided with the wall and the code for collision handling was being executed again and again changing the direction of velocity again and again
-void step(Circle* circle, int width, int height, float dt) {
+
+void next_position(Circle* circle, int width, int height, float dt) {
 
   //apply gravity if the ball isn't resting in 'y' direction
   if(!circle->is_resting_y) {
@@ -104,7 +175,7 @@ void step(Circle* circle, int width, int height, float dt) {
 
 
 
-void createCircle(Circle *circle, SDL_Surface* global_surface) {
+void create_circle(Circle *circle, SDL_Surface* global_surface) {
 
   //defining the boundries of the circle
   int left_boundry = circle->center_x-circle->radius;

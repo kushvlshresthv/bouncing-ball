@@ -9,14 +9,14 @@
 
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 800
-#define TRAJECTORY_LENGTH 500
-#define TRAJECTORY_WIDTH 5
+/* #define TRAJECTORY_LENGTH 500 */
+/* #define TRAJECTORY_WIDTH 5 */
 
 Plug plug = {0};
 
 
-Circle trajectory[TRAJECTORY_LENGTH];
-int circle_count = 0;
+/* Circle trajectory[TRAJECTORY_LENGTH]; */
+/* int circle_count = 0; */
 
 
 
@@ -34,7 +34,7 @@ void step(Circle*);
 
 
 
-bool init() {
+bool init_sdl() {
   if(SDL_Init(SDL_INIT_VIDEO) < 0) {
     printf("SDL could not be initialized: %s", SDL_GetError());
     return false;
@@ -75,8 +75,8 @@ void close() {
 }
 
 //global variables
-void (*step_ptr)(Circle*,int, int, float);
-void (*createCircle_ptr)(Circle*, SDL_Surface*);
+void (*init_ptr)(Plug *);
+void (*update_ptr)(Plug *);
 HMODULE plug_dll;
 
 
@@ -110,9 +110,9 @@ bool hot_reload() {
     CopyFile("../build/plug.dll", "../build/plug_temp.dll", FALSE);
     plug_dll = LoadLibrary("../build/plug_temp.dll");
 
-    step_ptr = (void (*)(Circle*, int, int, float))GetProcAddress(plug_dll, "step");
+    init_ptr = (void (*)(Plug *))GetProcAddress(plug_dll, "init");
 
-    createCircle_ptr = (void (*)(Circle*, SDL_Surface*))GetProcAddress(plug_dll, "createCircle");
+    update_ptr = (void (*)(Plug *))GetProcAddress(plug_dll, "update");
 
     return true;
 }
@@ -125,7 +125,7 @@ int main(int argc, char* argv[]) {
 
 
   //load sdl
-  if(!init()) {
+  if(!init_sdl()) {
     return 1;
   }
 
@@ -140,19 +140,19 @@ int main(int argc, char* argv[]) {
 
   //variables:
   bool    quit           = false;
-  plug.circle         = &(Circle){.center_x = 300, .center_y = 300, .radius = 100, .velocity_x = 100, .velocity_y = 0};
-  Uint64  perf_frequency = SDL_GetPerformanceFrequency();
-  Uint64  last_time      = SDL_GetPerformanceCounter();
-  float   dt             = 0;
+  /* Uint64  perf_frequency = SDL_GetPerformanceFrequency(); */
+  /* Uint64  last_time      = SDL_GetPerformanceCounter(); */
+  /* float   dt             = 0; */
 
+
+  init_ptr(&plug);
 
   while(!quit) {
 
-    //calculate 'dt'
-    Uint64 current_time = SDL_GetPerformanceCounter();
-    dt = (float)(current_time - last_time) / (float)perf_frequency;
-    last_time = current_time;
-
+    /* //calculate 'dt' */
+    /* Uint64 current_time = SDL_GetPerformanceCounter(); */
+    /* dt = (float)(current_time - last_time) / (float)perf_frequency; */
+    /* last_time = current_time; */
 
 
 
@@ -175,30 +175,30 @@ int main(int argc, char* argv[]) {
       }
     }
 
-    //add the circle the tragectory
-    if(circle_count < TRAJECTORY_LENGTH) {
-      trajectory[circle_count] = *plug.circle;
-      circle_count++;
-    } else {
-      //this block is executed when circle count = TRAJECTORY LENGTH
-      for(int i = 0; i<circle_count-1; i++) {
-        trajectory[i] = trajectory[i+1];
-      }
-      trajectory[circle_count - 1] = *plug.circle;
-    }
+    /* //add the circle the tragectory */
+    /* if(circle_count < TRAJECTORY_LENGTH) { */
+    /*   trajectory[circle_count] = *plug.circle; */
+    /*   circle_count++; */
+    /* } else { */
+    /*   //this block is executed when circle count = TRAJECTORY LENGTH */
+    /*   for(int i = 0; i<circle_count-1; i++) { */
+    /*     trajectory[i] = trajectory[i+1]; */
+    /*   } */
+    /*   trajectory[circle_count - 1] = *plug.circle; */
+    /* } */
 
     //clear the screen
     int width, height;
-    SDL_GetWindowSize(plug.global_window, &width, &height);
+    SDL_GetWindowSize(plug.global_window, &plug.width, &plug.height);
     SDL_FillRect(plug.global_surface, &(SDL_Rect){0, 0, width, height}, 0x000000);
 
 
 
     //render the trajectory
-    for(int i = 0; i < circle_count; i++) {
-      trajectory[i].radius = TRAJECTORY_WIDTH*i*0.005;
-      createCircle_ptr(&trajectory[i], plug.global_surface);
-    }
+    /* for(int i = 0; i < circle_count; i++) { */
+    /*   trajectory[i].radius = TRAJECTORY_WIDTH*i*0.005; */
+    /*   createCircle_ptr(&trajectory[i], plug.global_surface); */
+    /* } */
 
 
 
@@ -207,10 +207,12 @@ int main(int argc, char* argv[]) {
 
 
     //calculate the position of the circle
-    step_ptr(plug.circle,width, height, dt);
+    /* init_ptr(plug.circle,width, height, dt); */
 
     //create the circle
-    createCircle_ptr(plug.circle, plug.global_surface);
+    /* createCircle_ptr(plug.circle, plug.global_surface); */
+
+    update_ptr(&plug);
     SDL_UpdateWindowSurface(plug.global_window);
   }
 
