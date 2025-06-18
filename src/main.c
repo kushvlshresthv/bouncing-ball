@@ -130,7 +130,7 @@ int main(int argc, char* argv[]) {
 
     //clear the screen
     SDL_GetWindowSize(plug.global_window, &plug.window_width, &plug.window_height);
-    SDL_FillRect(plug.global_surface, &(SDL_Rect){0, 0, plug.window_width, plug.window_height}, 0x000000);
+    SDL_FillRect(plug.global_surface, &(SDL_Rect){0, 0, plug.window_width, plug.window_height}, 0x0d1117);
 
     update_ptr(&plug);
     SDL_UpdateWindowSurface(plug.global_window);
