@@ -6,11 +6,15 @@
 
 #define ACC_GRAVITY 700
 #define DAMPEN 0.92
-#define TRAJECTORY_LENGTH 500
-#define TRAJECTORY_WIDTH 5
+#define TRAJECTORY_LENGTH 680
+#define TRAJECTORY_WIDTH 2
+#define COLOR_RED 0xff0000
+#define COLOR_BLUE 0x0000ff
+#define COLOR_WHITE 0xeeeedb
+#define COLOR_ORANGE 0xf69911
 
 Uint64 current_time;
-Uint64 last_time;
+Uint64 last_time = 0;
 
 
 Circle trajectory[TRAJECTORY_LENGTH];
@@ -21,18 +25,13 @@ int circle_count = 0;
 //forward declarations:
 void record_trajectory(Circle *);
 void render_trajectory(SDL_Surface *);
-void create_circle(Circle *, SDL_Surface*);
+void create_circle(Circle *, SDL_Surface*, Uint32);
 void next_position(Circle*, int, int, float);
 
 
 
 void init(Plug *plug) {
-
     plug->circle = (Circle){.center_x = 300, .center_y = 300, .radius = 100, .velocity_x = 100, .velocity_y = 0};
-
-    printf("initialization done\n");
-
-  last_time = SDL_GetPerformanceCounter();
 }
 
 
@@ -40,9 +39,11 @@ void init(Plug *plug) {
 
 
 void update(Plug *plug) {
+  if(last_time==0) {
+     last_time = SDL_GetPerformanceCounter();
+  }
 
     //calculate how many time is taken to render each frame
-
     Uint64 current_time = SDL_GetPerformanceCounter();
     plug->dt = (float)(current_time-last_time)/(float)SDL_GetPerformanceFrequency();
     last_time = current_time;
@@ -51,15 +52,14 @@ void update(Plug *plug) {
 
     record_trajectory(&plug->circle);
     render_trajectory(plug->global_surface);
-    next_position(&plug->circle, plug->width, plug->height, plug->dt);
-    create_circle(&plug->circle, plug->global_surface);
+
+    next_position(&plug->circle, plug->window_width , plug->window_height, plug->dt);
+    create_circle(&plug->circle, plug->global_surface, COLOR_WHITE);
 }
 
-
-
+//NOTE: the trajectory restarts after hot reloading as it is a global variable and not part of the global state(Plug)
 
 void record_trajectory(Circle *circle) {
-  printf("Trajectory recorded\n");
     //add the circle the tragectory
     if(circle_count < TRAJECTORY_LENGTH) {
       trajectory[circle_count] = *circle;
@@ -75,10 +75,9 @@ void record_trajectory(Circle *circle) {
 
 
 void render_trajectory(SDL_Surface* global_surface) {
-  printf("Trajectory Rendered\n");
     for(int i = 0; i < circle_count; i++) {
       trajectory[i].radius = TRAJECTORY_WIDTH*i*0.005;
-      create_circle(&trajectory[i], global_surface);
+      create_circle(&trajectory[i], global_surface, COLOR_ORANGE);
     }
 }
 
@@ -175,7 +174,7 @@ void next_position(Circle* circle, int width, int height, float dt) {
 
 
 
-void create_circle(Circle *circle, SDL_Surface* global_surface) {
+void create_circle(Circle *circle, SDL_Surface* global_surface, Uint32 color ) {
 
   //defining the boundries of the circle
   int left_boundry = circle->center_x-circle->radius;
@@ -189,7 +188,7 @@ void create_circle(Circle *circle, SDL_Surface* global_surface) {
     for(int vertical = top_boundry; vertical <= bottom_boundry; vertical++) {
       int distance_from_center_squared = (horizontal - circle->center_x)*(horizontal - circle->center_x) +(vertical - circle->center_y)*(vertical-circle->center_y);
       if((distance_from_center_squared) <= (circle->radius*circle->radius)) {
-        SDL_FillRect(global_surface, &(SDL_Rect){horizontal, vertical, 1, 1}, 0xff0000);
+        SDL_FillRect(global_surface, &(SDL_Rect){horizontal, vertical, 1, 1}, color);
       }
     }
   }

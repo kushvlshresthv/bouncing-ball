@@ -18,8 +18,8 @@ typedef struct {
   SDL_Window *global_window;
   SDL_Surface *global_surface;   //can be obtained from the global window itself
   float dt;
-  int width;    //can be obtained from method call as well
-  int height;
+  int window_width;
+  int window_height;
 } Plug;
 
 
